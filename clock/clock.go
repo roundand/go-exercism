@@ -25,10 +25,12 @@ func New(hour int, minute int) Clock {
 		// calculate minute
 		m = (60 + (a % 60)) % 60
 
-		if m == 0 {
-			h = 24 + ((a / 60) % 24)
-		} else {
-			h = 23 + ((a / 60) % 24)
+		// do hours the obvious way ...
+		h = 24 + ((a / 60) % 24)
+
+		// ... unless there were some loose minutes
+		if m > 0 {
+			h = h - 1
 		}
 	} else {
 		h = (a / 60) % 24
