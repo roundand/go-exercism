@@ -1,10 +1,16 @@
-// Package clause.
+// gigasecond provides a function which adds one gs to a date.
 package gigasecond
 
+// we'll need the time library
+import (
+	"time"
+)
+
 // Constant declaration.
-const testVersion = ? // find the value in gigasecond_test.go
+const testVersion = 4
 
-// API function.  It uses a type from the Go standard library.
-func AddGigasecond(time.Time) time.Time
-
-// Reviewers don't think much of stub comments.  Replace or remove.
+// API function to add one gigasecond to a time value using standard go type
+func AddGigasecond(t time.Time) time.Time {
+	gs, _ := time.ParseDuration("1000000000s")
+	return t.Add(gs)
+}
