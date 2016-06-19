@@ -10,15 +10,15 @@ const testVersion = 2 // same as targetTestVersion
 
 /////////
 //
-// this version runs "go test - bench ." in avg 1.620 seconds on my laptop
+// this version runs "go test - bench ." in avg 1.22 seconds on my laptop
 //
 /////////
 
 // bob's sole function is to respond to Alice's inputs
 func Hey(in string) string {
 
-  var isQuestion = regexp.MustCompile(`\?\s*$`)
-  var hasWord = regexp.MustCompile(`\w`)
+	var isQuestion = regexp.MustCompile(`\?\s*$`)
+	var hasWord = regexp.MustCompile(`\w`)
 
 	// He answers 'Whoa, chill out!' if you yell at him.
 	if in != strings.ToLower(in) && in == strings.ToUpper(in) {
