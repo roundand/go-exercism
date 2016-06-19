@@ -10,12 +10,15 @@ const testVersion = 2 // same as targetTestVersion
 
 /////////
 //
-// this version runs "go test - bench ." in 1.637 seconds on my laptop
+// this version runs "go test - bench ." in avg 1.620 seconds on my laptop
 //
 /////////
 
 // bob's sole function is to respond to Alice's inputs
 func Hey(in string) string {
+
+  var isQuestion = regexp.MustCompile(`\?\s*$`)
+  var hasWord = regexp.MustCompile(`\w`)
 
 	// He answers 'Whoa, chill out!' if you yell at him.
 	if in != strings.ToLower(in) && in == strings.ToUpper(in) {
@@ -23,12 +26,12 @@ func Hey(in string) string {
 	}
 
 	// Bob answers 'Sure.' if you ask him a question.
-	if isQuestion, _ := regexp.MatchString(`\?\s*$`, in); isQuestion {
+	if isQuestion.MatchString(in) {
 		return "Sure."
 	}
 
 	// He says 'Fine. Be that way!' if you address him without actually saying anything.
-	if hasWord, _ := regexp.MatchString(`\w`, in); !hasWord {
+	if !(hasWord.MatchString(in)) {
 		return "Fine. Be that way!"
 	}
 
