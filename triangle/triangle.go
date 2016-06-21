@@ -13,8 +13,6 @@ func KindFromSides(a, b, c float64) Kind {
   // sort sides in order of ascending length
   x, y, z := sortSides(a, b, c)
 
-//  nan := math.NaN()
-
   // sides are invalid if any length is zero or negative length,
   // or if two shortest sides are less than longest side
   if (math.IsNaN(0 * x * y * z) || x <= 0 || (x + y) < z) {
