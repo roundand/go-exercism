@@ -1,9 +1,124 @@
 // Package house provides functions for constructing recursive nursery rhymes.
 package house
 
-import (
-	"fmt"
+/*
+
+an ad-hoc Song grammar -
+
+SONG   			::= VERSES
+VERSES 			::= VERSE [BLANKLINE VERSES]
+VERSE  			::= SUBJECT [NEWLINE RELPHRASES] STOP
+SUBJECT     ::= INTRO phrase
+RELPHRASES 	::= RELPHRASE [NEWLINE RELPHRASES]
+RELPHRASE 	::= REF link phrase
+
+INTRO				::= "This is"
+REF				 	::= "that"
+STOP				::= "."
+BLANKLINE   ::= "\n\n"
+NEWLINE			::= "\n"
+
+*/
+
+
+type Topic struct {
+	phrase string
+	link string
+}
+
+var topics = []Topic{
+	{"the horse and the hound and the horn", "belonged to"},
+	{"the farmer sowing his corn", "kept"},
+	{"the rooster that crowed in the morn", "woke"},
+	{"the priest all shaven and shorn", "married"},
+	{"the man all tattered and torn", "kissed"},
+	{"the maiden all forlorn", "milked"},
+	{"the cow with the crumpled horn", "tossed"},
+	{"the dog", "worried"},
+	{"the cat", "killed"},
+	{"the rat", "ate"},
+	{"the malt", "lay in"},
+	{"the house that Jack built", ""},
+}
+
+var (
+	intro = "This is"
+	ref  = "that"
+	stop = "."
+	blankline = "\n\n"
+	newline = "\n"
 )
+
+/*
+Song generates all verses of a recursively structured song.
+
+SONG   			::= VERSES
+*/
+func Song() string {
+
+	song := genVerses(topics)
+	return song
+}
+
+/*
+genVerses recursively generated verses from topics, but in reverse order
+
+VERSES 			::= VERSE [BLANKLINE VERSES]
+*/
+func genVerses(topics []Topic) string {
+
+	// if this is the last entry, generate last verse and be done.
+	if len(topics) == 1 {
+		return genVerse(topics)
+	}
+
+	// generate remainder of song for remaining entries then generate verse for current entry
+	return genVerses(topics[1:]) + blankline + genVerse(topics)
+}
+
+/*
+genVerse generates a single verse from topics
+
+VERSE  			::= SUBJECT [NEWLINE RELPHRASES] STOP
+SUBJECT     ::= INTRO phrase
+*/
+func genVerse(topics []Topic) string {
+	if len(topics) == 1 {
+		return compose(intro, genRelPhrases(topics)) + stop
+	}
+
+	return compose(intro, topics[0].phrase) + newline + genRelPhrases(topics) + stop
+}
+
+/*
+genRelPhrases generates a sequence of relative phrases from topics
+
+RELPHRASES 	::= RELPHRASE [NEWLINE RELPHRASES]
+RELPHRASE 	::= REF link phrase
+*/
+func genRelPhrases(topics []Topic) string {
+	if len(topics) == 1 {
+		return topics[0].phrase
+	}
+
+	if len(topics) == 2 {
+		return compose(ref, topics[0].link, topics[1].phrase)
+	}
+
+	return compose(ref, topics[0].link, topics[1].phrase) + newline + genRelPhrases(topics[1:])
+}
+
+// compose strings using a space seperator, recursively of course
+func compose(items ...string) string {
+	if len(items) == 1 {
+		return items[0]
+	}
+	return items[0] + " " + compose(items[1:]...)
+}
+
+//
+// non-Song tests
+//
 
 // Embed adds a noun phrase to a relative phrase and returns the result.
 func Embed(relPhrase, nounPhrase string) string {
@@ -42,107 +157,6 @@ func Verse(subject string, relClauses []string, nounPhrase string) string {
 
 	// edge case - if we start off with no relClauses, return empty string
 	return ""
-}
-
-type NounPhrase struct {
-	noun string
-	phrase string
-}
-
-/*
-This is the horse and the hound and the horn
-that belonged to the farmer sowing his corn
-that kept the rooster that crowed in the morn
-that woke the priest all shaven and shorn
-that married the man all tattered and torn
-that kissed the maiden all forlorn
-that milked the cow with the crumpled horn
-that tossed the dog
-that worried the cat
-that killed the rat
-that ate the malt
-that lay in the house that Jack built.`
-*/
-var nounPhrases = []NounPhrase {
-	{"the horse and the hound and the horn", "belonged to"},
-	{"the farmer sowing his corn", "kept"},
-	{"the rooster that crowed in the morn", "woke"},
-	{"the priest all shaven and shorn", "married"},
-	{"the man all tattered and torn", "kissed"},
-	{"the maiden all forlorn", "milked"},
-	{"the cow with the crumpled horn", "tossed"},
-	{"the dog", "worried"},
-	{"the cat", "killed"},
-	{"the rat", "ate"},
-	{"the malt", "lay in"},
-	{"the house that Jack built.", ""},
-}
-
-var (
-	intro = "This is"
-	that = "that"
-)
-
-// Song generates all verses of a recursively structured song.
-func Song() string {
-
-	song := genSong(nounPhrases)
-	fmt.Printf("song: %v\n", song)
-	return song
-}
-
-/*
-three cases:
-
-#lastline - intro + noun
-
-#penultimate - intro + noun + that + #lastline
-
-#otherline - intro + noun + that + "\n" + rest
-*/
-func genSong(nounPhrases []NounPhrase) string {
-
-	// if this is the last entry, generate last verse and be done.
-	if (len(nounPhrases) == 1) {
-		return joinPhrases(intro, nounPhrases[0].noun)
-	}
-
-	// generate remainder of song for remaining entries then generate verse for current entry
-	return genSong(nounPhrases[1:]) + "\n\n" + genVerse(nounPhrases)
-}
-
-/*
-three cases:
-
-#lastline - intro + noun
-
-#penultimate - intro + noun + that + #lastline
-
-#otherline - intro + noun + that + "\n" + rest
-*/
-func genVerse(nounPhrases []NounPhrase) string {
-	if len(nounPhrases) == 1 {
-		return joinPhrases(intro, nounPhrases[0].noun)
-	}
-
-	return joinPhrases(intro, nounPhrases[0].noun) + "\n" + genLines(nounPhrases)
-}
-
-func genLines(nounPhrases []NounPhrase) string {
-	if len(nounPhrases) == 0 {
-		return ""
-	}
-
-	if len(nounPhrases) == 1 {
-		return nounPhrases[0].noun
-	}
-
-	if len(nounPhrases) == 2 {
-		return that + " " + nounPhrases[0].phrase + " " + genLines(nounPhrases[1:])
-	}
-
-	return that + " " + nounPhrases[0].phrase + " " + nounPhrases[1].noun + "\n" + genLines(nounPhrases[1:])
-
 }
 
 // joinPhrases joins two strings, putting a space between them
