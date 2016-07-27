@@ -1,7 +1,7 @@
 // Package pascal provides a method for calculating Pascal's triangle.
 package pascal
 
-// Function Triangle calculates Pascal's Triangle to the specified depth
+// Triangle calculates Pascal's Triangle to the specified depth
 func Triangle(depth int) [][]int {
 
 	// terminating case
