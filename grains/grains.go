@@ -10,12 +10,12 @@ import (
 // allow switching optimisation strategy
 var (
 	fastSquare *bool
-  fastTotal *bool
+	fastTotal  *bool
 )
 
 func init() {
 	fastSquare = flag.Bool("fastSquare", false, "a bool")
-  fastTotal = flag.Bool("fastTotal", false, "a bool")
+	fastTotal = flag.Bool("fastTotal", false, "a bool")
 	flag.Parse()
 }
 
@@ -25,10 +25,10 @@ func Square(s int) (uint64, error) {
 		return 0, fmt.Errorf("cell '%n' is off the board", s)
 	}
 
-  // use optimised method?
-  if *fastSquare {
-    return uint64(1) << uint(s - 1), nil
-  }
+	// use optimised method?
+	if *fastSquare {
+		return uint64(1) << uint(s-1), nil
+	}
 
 	if s == 1 {
 		return 1, nil
@@ -40,11 +40,11 @@ func Square(s int) (uint64, error) {
 
 // Total calculates number of grains required for entire chessboard
 func Total() uint64 {
-  if *fastTotal {
-    x := (uint64(1) << 63)
-    y := (uint64(1) << 63) - 1
-    return x + y
-  }
+	if *fastTotal {
+		x := (uint64(1) << 63)
+		y := (uint64(1) << 63) - 1
+		return x + y
+	}
 	return addSquares(64)
 }
 
