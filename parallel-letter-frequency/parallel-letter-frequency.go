@@ -13,8 +13,8 @@ type count struct {
 }
 
 // ConcurrentFrequency calculates frequency of letters in a slice of strings, concurrently
-func ConcurrentFrequency(sources []string) map[rune]int {
-	var con = make(map[rune]int)
+func ConcurrentFrequency(sources []string) FreqMap {
+	var con = make(FreqMap)
 	var ch = make(chan count)
 	var wg sync.WaitGroup
 
