@@ -41,18 +41,5 @@ func ConcurrentFrequency(sources []string) FreqMap {
 		con[c.k] += c.v
 	}
 
-	// diagnose issues
-	seq := Frequency(sources[0] + sources[1] + sources[2])
-	fmt.Printf("lengths - len(seq): %d, len(con): %d\n", len(seq), len(con))
-	for k, _ := range seq {
-		fmt.Printf("Match? %v: values for %q: %d v. %d\n", (seq[k] == con[k]), k, seq[k], con[k])
-	}
-	fmt.Printf("Testing ConcurrentFrequency...\n")
-	if !reflect.DeepEqual(con, seq) {
-		fmt.Printf("ConcurrentFrequency wrong result!\n")
-	} else {
-		fmt.Printf("ConcurrentFrequency right result!\n")
-	}
-
 	return con
 }
