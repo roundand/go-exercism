@@ -2,8 +2,6 @@
 package letter
 
 import (
-	"fmt"
-	"reflect"
 	"sync"
 )
 
