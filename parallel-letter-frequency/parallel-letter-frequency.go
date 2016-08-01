@@ -2,6 +2,7 @@
 package letter
 
 import (
+	"flag"
 	"sync"
 )
 
@@ -10,10 +11,20 @@ type count struct {
 	v int
 }
 
+var (
+	depth int
+)
+
+func init() {
+	depthFlag := flag.Int("depth", 16, "buffer depth") // based on some quick ad-hoc benchmarking (see code below)
+	flag.Parse()
+	depth = *depthFlag
+}
+
 // ConcurrentFrequency calculates frequency of letters in a slice of strings, concurrently
 func ConcurrentFrequency(sources []string) FreqMap {
 	var con = make(FreqMap)
-	var ch = make(chan count)
+	var ch = make(chan count, depth)
 	var wg sync.WaitGroup
 
 	// for each source string
@@ -41,3 +52,18 @@ func ConcurrentFrequency(sources []string) FreqMap {
 
 	return con
 }
+
+/* to benchmark, add to the test suite:
+
+func BenchmarkConcurrentFrequency(b *testing.B) {
+	b.StopTimer()
+		b.StartTimer()
+
+		for i := 0; i < b.N; i++ {
+			ConcurrentFrequency([]string{euro, dutch, us})
+		}
+
+		b.StopTimer()
+}
+
+*/
