@@ -11,11 +11,8 @@ const testVersion = 2
 
 // Encode returns the square code encrypted version of a plaintext parameter.
 func Encode(pt string) string {
-
 	nt := normalise(pt)
-
-	// calculate row and column lengths
-	r, c := calcSides(len(nt))
+	r, c := calcRowsCols(len(nt))
 
 	// create encrypted rectangle
 	// reading normalised rectangle row by row
@@ -24,12 +21,11 @@ func Encode(pt string) string {
 	var cur int = 0                      // current linear position
 	for row := 0; row < r; row++ {       // which row of the (virtual) rectangle are we reading?
 		for col := 0; col < c && cur < len(nt); col++ { // which column are we reading?
-			enc[col] += nt[cur : cur+1] // write current character, using column as row
+			enc[col] += string(nt[cur]) // write current character, using column as row
 			cur++
 		}
 	}
 
-	// return
 	return strings.Join(enc, " ")
 }
 
@@ -38,17 +34,17 @@ func normalise(pt string) string {
 	nt := ""
 	for _, rn := range pt {
 		if unicode.IsLetter(rn) || unicode.IsDigit(rn) {
-			nt += strings.ToLower(string(rn))
+			nt += string(rn)
 		}
 	}
-	return nt
+	return strings.ToLower(nt)
 }
 
-// calcSides calculates the squarest rectangle that will contain the message.
+// calcRowsCols calculates the squarest rectangle that will contain the message.
 // "The size of the rectangle (`r x c`) should be decided by the length of the message,
 // such that `c >= r` and `c - r <= 1`, where `c` is the number of columns
 // and `r` is the number of rows."
-func calcSides(l int) (r, c int) {
+func calcRowsCols(l int) (r, c int) {
 	r, c = int(math.Sqrt(float64(l))), 0
 	if (r * r) == l {
 		c = r
