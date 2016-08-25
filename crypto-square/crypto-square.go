@@ -21,13 +21,10 @@ func Encode(pt string) string {
 	// reading normalised rectangle row by row
 	// and writing to encrypted rectangle col by col
 	var enc []string = make([]string, c) // encrypted output
-	var cur int = 0                      // current position
+	var cur int = 0                      // current linear position
 	for row := 0; row < r; row++ {       // which row of the (virtual) rectangle are we reading?
-		for col := 0; col < c; col++ {     // which column are we reading?
-			if cur >= len(nt) {
-				break
-			}
-			enc[col] += nt[cur : cur+1]      // write current character, using column as row
+		for col := 0; col < c && cur < len(nt); col++ { // which column are we reading?
+			enc[col] += nt[cur : cur+1] // write current character, using column as row
 			cur++
 		}
 	}
@@ -44,7 +41,7 @@ func normalise(pt string) string {
 			nt += strings.ToLower(string(rn))
 		}
 	}
-  return nt
+	return nt
 }
 
 // calcSides calculates the squarest rectangle that will contain the message.
