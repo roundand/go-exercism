@@ -21,18 +21,18 @@ func Bracket(input string) (matched bool, err error) {
 
 	// read each character from the input
 	for i := 0; i < len(input); i++ {
-		in := input[i]
-		if in == byte('{') || in == byte('[') || in == byte('(') {
-			// This is an opening symbol - push it on to the stack
+		switch in := input[i]; in {
+		case '{', '[', '(': // This is an opening symbol - push it on to the stack
 			stack = push(stack, in)
-		} else if in == byte('}') || in == byte(']') || in == byte(')') {
-			// This is a closing symbol - is there a matching opening symbol on the stack?
+		case '}', ']', ')': // This is a closing symbol - is there a matching opening symbol on the stack?
 			if len(stack) == 0 {
 				return false, nil
 			}
 			stack, top = pop(stack)
-			pair := string(top) + string(in)
-			if !(pair == "{}" || pair == "[]" || pair == "()") {
+			switch pair := string(top) + string(in); pair {
+			case "{}", "[]", "()":
+				continue
+			default:
 				return false, nil
 			}
 		}
