@@ -15,7 +15,6 @@ func ParseBinary(binary string) (int, error) {
 	for i, c := range binary {
 		switch c {
 		case '1':
-      fmt.Printf("binary: %s, l: %d; result: %d, i: %d, c: %s, (1 << uint(l - i)): %d.\n", binary, l, result, i, string(c), (1 << uint(l - i)))
 			result += (1 << uint(l - i))
 		case '0':
 			continue
