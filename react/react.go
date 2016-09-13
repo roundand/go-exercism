@@ -1,36 +1,49 @@
 // Package react implements types and methods for reactive cell-based programming.
 package react
 
-import (
-//	"fmt"
-)
+import "fmt"
 
 const testVersion = 4
 
+// we'll be using a lot of these
+type cellID int
+
 // reactor implements the Reactor interface.
-type xReactor struct {
-	nextCell int // id of the next cell to be created - simpler than pointers, since method signatures use value cell parameters.
+type xReactor struct{}
+
+var state struct { // state of the reactor universe
+	nextCell cellID         // id of the next cell to be created - simpler than pointers, since method signatures use value cell parameters.
+	value    map[cellID]int // current value for each cell, by id.
+}
+
+func nextCell() cellID {
+	state.nextCell++
+	return state.nextCell
 }
 
 // New returns an xReactor which implements Reactor.
 func New() Reactor {
+	state.nextCell = 42
+	state.value = make(map[cellID]int)
+	state.value[cellID(-1)] = 99
 	return xReactor{}
 }
 
 // CreateInput is a Reactor method that returns an InputCell.
 func (r xReactor) CreateInput(value int) InputCell {
-	r.nextCell++
-	return xInputCell{xCell{r.nextCell, value}}
+	cell := xInputCell{}
+	cell.id = nextCell()
+	cell.SetValue(value)
+	return cell
 }
 
 // CreateCompute1 creates a compute cell which computes its value
 // based on one other cell. The compute function will only be called
 // if the value of the passed cell changes.
 func (r xReactor) CreateCompute1(other Cell, calc func(int) int) ComputeCell {
-	r.nextCell++
 	cell := xComputeCell1{}
-  cell.id = r.nextCell
-	cell.other = other.(xCell)
+	cell.id = nextCell()
+	cell.other = other.(cellIDer).cellID()
 	cell.calc = calc
 	return cell
 }
@@ -39,25 +52,31 @@ func (r xReactor) CreateCompute1(other Cell, calc func(int) int) ComputeCell {
 // The compute function will only be called if the value of any of the
 // passed cells changes.
 func (r xReactor) CreateCompute2(other1, other2 Cell, calc func(int, int) int) ComputeCell {
-  r.nextCell++
 	cell := xComputeCell2{}
-  cell.id = r.nextCell
-	cell.other1 = other1.(xCell)
-  cell.other2 = other2.(xCell)
+	cell.id = nextCell()
+	cell.other1 = other1.(cellIDer).cellID()
+	cell.other2 = other2.(cellIDer).cellID()
 	cell.calc = calc
 	return cell
 }
 
-
 // xCell implements the Cell interface.
 type xCell struct {
-	id    int
-	value int
+	id cellID
 }
 
 // Value implements the Cell interface.
 func (cell xCell) Value() int {
-	return cell.value
+	return state.value[cell.id]
+}
+
+func (cell xCell) cellID() cellID {
+	return cell.id
+}
+
+// Value implements the Cell interface.
+type cellIDer interface {
+	cellID() cellID
 }
 
 // xInputCell implements InputCell.
@@ -67,7 +86,8 @@ type xInputCell struct {
 
 // SetValue sets the value of an xInputCell.
 func (cell xInputCell) SetValue(value int) {
-	cell.value = value
+	state.value[cell.id] = value
+	fmt.Printf("SetValue(): state.value: %v\n", state.value)
 }
 
 // xCompute implements ComputeCell callbacks.
@@ -87,20 +107,21 @@ func (cell xComputeCell) AddCallback(cb func(int)) CallbackHandle {
 
 // RemoveCallback removes a previously added callback, if it exists.
 func (cell xComputeCell) RemoveCallback(h CallbackHandle) {
-  hint := h.(int) // panic if it's not actually an int, because we know it is.
-  delete(cell.callbacks, hint)
+	hint := h.(int) // panic if it's not actually an int, because we know it is.
+	delete(cell.callbacks, hint)
 }
 
 // xCompute1 specialises ComputeCell for a single cell dependency.
 type xComputeCell1 struct {
 	xComputeCell
-	other xCell
+	other cellID
 	calc  func(int) int
 }
 
 // xCompute2 specialises ComputeCell for a two-cell dependency.
 type xComputeCell2 struct {
 	xComputeCell
-	other1, other2 xCell
-	calc  func(int, int) int
+	other1 cellID
+	other2 cellID
+	calc   func(int, int) int
 }
