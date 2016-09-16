@@ -12,11 +12,15 @@ type cellID int
 type xReactor struct{}
 
 var state struct { // state of the reactor universe
-	nextCell  cellID                // id of the next cell to be created - simpler than pointers, since method signatures use value cell parameters.
-	value     map[cellID]int        // current value for each cell, by id.
-	calc      map[cellID]func() int // function for each compute1
-	comp1call map[cellID][]cellID   // which compute1 cells does each cell update?
-	comp2call map[cellID][]cellID   // which compute2 cells does each cell update?
+	nextCell cellID // id of the next cell to be created - simpler than pointers, since method signatures use value cell parameters.
+
+	// state for all cells
+	value     map[cellID]int      // current value for each cell, by id.
+	comp1call map[cellID][]cellID // which compute1 cells does each cell update?
+	comp2call map[cellID][]cellID // which compute2 cells does each cell update?
+
+	// additional state for compute cells
+	calc map[cellID]func() int // function for each compute cell
 }
 
 func nextCell() cellID {
@@ -31,7 +35,6 @@ func New() Reactor {
 	state.calc = make(map[cellID]func() int)
 	state.comp1call = make(map[cellID][]cellID)
 	state.comp2call = make(map[cellID][]cellID)
-	state.value[cellID(-1)] = 99
 	return xReactor{}
 }
 
@@ -82,7 +85,9 @@ func (r xReactor) CreateCompute2(other1, other2 Cell, calc func(int, int) int) C
 // pack1 uses closure to pack a single parameter function and its parameter into a zero parameter function
 func pack2(calc func(int, int) int, other1 cellID, other2 cellID) func() int {
 	return func() int {
-		return calc(state.value[other1], state.value[other2])
+		v1, v2 := state.value[other1], state.value[other2]
+		fmt.Printf("pack2() v1: %d, v2: %d.\n", v1, v2)
+		return calc(v1, v2)
 	}
 }
 
@@ -110,20 +115,60 @@ type xInputCell struct {
 	xCell
 }
 
-// SetValue sets the value of an xInputCell.
+// SetValue sets the value of an xInputCell and updates all direct and indirect dependencies.
 func (cell xInputCell) SetValue(value int) {
+
+	if state.value[cell.id] == value {
+		return // no action to take if value unchanged.
+	}
 	state.value[cell.id] = value
 	fmt.Printf("SetValue(): state.value: %v\n", state.value)
 
-	// identify and update any compute1 dependencies
-	for _, dep := range state.comp1call[cell.id] {
-		state.value[dep] = state.calc[dep]()
-	}
+	// create todo1 and todo2 maps so we can follow minimal re-work strategies
+	todo1 := make(map[cellID]bool)
+	todo2 := make(map[cellID]bool)
 
-	// identify and update any compute2 dependencies
-	for _, dep := range state.comp2call[cell.id] {
-		state.value[dep] = state.calc[dep]()
+	// seed the todos
+	updateTodos(&todo1, &todo2, cell.id)
+
+	// keep going while there are any todos
+	for len(todo1)+len(todo2) > 0 {
+		switch {
+		case len(todo1) > 0:
+			ci := pop(&todo1)
+			recalc(&todo1, &todo2, ci)
+		case len(todo2) > 0:
+			ci := pop(&todo2)
+			recalc(&todo1, &todo2, ci)
+		}
 	}
+}
+
+func recalc(todo1, todo2 *map[cellID]bool, ci cellID) {
+	val := state.calc[ci]()
+	if val != state.value[ci] {
+		state.value[ci] = val
+		updateTodos(todo1, todo2, ci)
+	}
+}
+
+// update todo1 and todo2 maps with dependencies of a given cell
+func updateTodos(todo1, todo2 *map[cellID]bool, cell cellID) {
+	for _, dep := range state.comp1call[cell] {
+		(*todo1)[dep] = true
+	}
+	for _, dep := range state.comp2call[cell] {
+		(*todo2)[dep] = true
+	}
+}
+
+// removes one value from a map and returns it
+func pop(todo *map[cellID]bool) (ci cellID) {
+	for ci := range *todo {
+		delete(*todo, ci)
+		return ci
+	}
+	panic("empty todo passed to pop")
 }
 
 // xCompute implements ComputeCell callbacks.
