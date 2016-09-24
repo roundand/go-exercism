@@ -1,29 +1,31 @@
 package atbash
 
-import "strings"
+import "bytes"
 
 // Atbash encrypts a string using an ancient cypher.
 func Atbash(s string) string {
 	c1 := make(chan rune)
 	c2 := make(chan rune)
 
+	// pipeline using close / range control pattern
 	go filter(c1, s)
 	go format(c1, c2)
 
-	msg := ""
+	var bb bytes.Buffer
 	for r := range c2 {
-		msg = msg + string(r)
+		bb.WriteRune(r)
 	}
-
-	return msg
+	return bb.String()
 }
 
 func filter(chars chan rune, s string) {
-	for _, r := range strings.ToLower(s) {
+	for _, r := range s { //} strings.ToLower(s) {
 		switch {
-		case strings.ContainsRune("abcdefghijklmnopqrstuvwxyz", r):
+		case r >= 'A' && r <= 'Z':
+			chars <- encode(r + 'a' - 'A')
+		case r >= 'a' && r <= 'z':
 			chars <- encode(r)
-		case strings.ContainsRune("0123456789", r):
+		case r >= '0' && r <= '9':
 			chars <- r
 		}
 	}
