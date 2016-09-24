@@ -21,9 +21,8 @@ func Number(s string) (string, error) {
 
 // AreaCode returns a US-style area code
 func AreaCode(s string) (string, error) {
-	var d string
-	var e error
-	if d, e = Number(s); e != nil {
+	d, e := Number(s)
+	if e != nil {
 		return d, e
 	}
 	return fmt.Sprintf("%s", string(d[0:3])), nil
@@ -31,9 +30,8 @@ func AreaCode(s string) (string, error) {
 
 // Format returns a US-style formatted phone number.
 func Format(s string) (string, error) {
-	var d string
-	var e error
-	if d, e = Number(s); e != nil {
+	d, e := Number(s)
+	if e != nil {
 		return d, e
 	}
 	return fmt.Sprintf("(%s) %s-%s", string(d[0:3]), string(d[3:6]), string(d[6:])), nil
