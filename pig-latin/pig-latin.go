@@ -3,27 +3,74 @@ package igpay
 
 import "strings"
 
+type key int
+type word struct {
+	k key
+	v string
+}
+
+const (
+	c0 key = iota
+	c1
+	c2
+	c3
+)
+
 // PigLatin converts an English word or sentence to Pig Latin.
 func PigLatin(e string) string {
 	// Using channels for a flow-based solution.
-	in := make(chan string)
-	out := make(chan string)
+	tokens := make(chan string)
+	words := make(chan word)
+	pig := make(chan string)
 
-	go words(in, e)
-	go rules(out, in)
+	go lex(tokens, e)
+	go parse(words, tokens)
+	go encode(pig, words)
 
 	// assemble output and return it
 	var ret []string
-	for w := range out {
+	for w := range pig {
 		ret = append(ret, w)
 	}
 	return strings.Join(ret, " ")
 }
 
-func words(in chan string, s string) {
-	defer close(in)
-	for _, w := range strings.Split(s, " ") {
-		in <- w
+func lex(tokens chan string, e string) {
+	defer close(tokens)
+	for _, t := range strings.Split(e, " ") {
+		tokens <- t
+	}
+}
+
+func parse(words chan word, tokens chan string) {
+	defer close(words)
+	for t := range tokens {
+		var k key
+		switch {
+		case string(t[0:2]) == "ch":
+			k = 2
+		case string(t[0:2]) == "qu":
+			k = 2
+		case string(t[0:2]) == "sq":
+			k = 3
+		case string(t[0:2]) == "sc" && isVowel(t[2]):
+			k = 2
+		case string(t[0:2]) == "sc":
+			k = 3
+		case string(t[0:2]) == "th" && isVowel(t[2]):
+			k = 2
+		case string(t[0:2]) == "th":
+			k = 3
+		case string(t[0:1]) == "y" && !isVowel(t[1]):
+			k = 0
+		case string(t[0:1]) == "x" && !isVowel(t[1]):
+			k = 0
+		case isVowel(t[0]):
+			k = 0
+		default:
+			k = 1
+		}
+		words <- word{k, t}
 	}
 }
 
@@ -31,32 +78,18 @@ func isVowel(b byte) bool {
 	return b == 'a' || b == 'e' || b == 'i' || b == 'o' || b == 'u'
 }
 
-func rules(out, in chan string) {
-	defer close(out)
-	for w := range in {
-		switch {
-		case string(w[0:2]) == "ch":
-			out <- code2(w)
-		case string(w[0:2]) == "qu":
-			out <- code2(w)
-		case string(w[0:2]) == "sq":
-			out <- code3(w)
-		case string(w[0:2]) == "sc" && isVowel(w[2]):
-			out <- code2(w)
-		case string(w[0:2]) == "sc":
-			out <- code3(w)
-		case string(w[0:2]) == "th" && isVowel(w[2]):
-			out <- code2(w)
-		case string(w[0:2]) == "th":
-			out <- code3(w)
-		case string(w[0:1]) == "y" && !isVowel(w[1]):
-			out <- code0(w)
-		case string(w[0:1]) == "x" && !isVowel(w[1]):
-			out <- code0(w)
-		case isVowel(w[0]):
-			out <- code0(w)
+func encode(pig chan string, words chan word) {
+	defer close(pig)
+	for w := range words {
+		switch w.k {
+		case c3:
+			pig <- code3(w.v)
+		case c2:
+			pig <- code2(w.v)
+		case c1:
+			pig <- code1(w.v)
 		default:
-			out <- code1(w)
+			pig <- code0(w.v)
 		}
 	}
 }
