@@ -34,7 +34,7 @@ func FromRNA(s string) []string {
 	for i := 0; len(s) >= i+3; i += 3 {
 		p := FromCodon(s[i : i+3])
 		if p == "STOP" {
-			return r
+			break
 		}
 		r = append(r, p)
 	}
