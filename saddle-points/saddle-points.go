@@ -60,18 +60,23 @@ func (m *Matrix) Col(i int) []int {
 // Pair is an array - not a slice - of two integers.
 type Pair [2]int
 
-// Saddle returns a list of all if any saddle points in a matrix.
+// Saddle returns a list of any and all saddle points in a matrix.
 func (m *Matrix) Saddle() []Pair {
 	points := []Pair{}
 
-	// for every row in matrix ...
+	// cache lowest values for each column
+	loCol := make([]int, len((*m)[0]))
+	for c := range (*m)[0] {
+		loCol[c] = lowest(m.Col(c))
+	}
+
+	// for every value in every row ...
 	for r, row := range *m {
 
-		// ... for each element in row ...
+		// ... if it's a saddle point, note it.
+		hiRow := highest(row) // cache highest value in row
 		for c, val := range row {
-
-			// ... if it's a saddle point, note it.
-			if val == highest(row) && val == lowest(m.Col(c)) {
+			if val == hiRow && val == loCol[c] {
 				points = append(points, Pair{r, c})
 			}
 		}
