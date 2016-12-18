@@ -82,9 +82,9 @@ func (m Matrix) Cols() [][]int {
 	return cols
 }
 
-// Set sets one cell of a matrix
+// Set sets one cell of a matrix, provided cell coordinates are in-range
 func (m Matrix) Set(row, col, val int) bool {
-	if row >= len(m) || row < 0 || col >= len(m[0]) || col < 0 {
+	if row < 0 || row >= len(m) || col < 0 || col >= len(m[0]) {
 		return false
 	}
 	m[row][col] = val
