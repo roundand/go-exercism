@@ -12,7 +12,7 @@ const testVersion = 1
 // Matrix is a rectangular array of integers.
 type Matrix [][]int
 
-// New parses input into a rectangular integer array and returns it
+// New parses input into a rectangular slice of integer slices, and returns it
 func New(s string) (Matrix, error) {
 	m := Matrix{}
 	rows := strings.Split(s, "\n")
@@ -20,30 +20,31 @@ func New(s string) (Matrix, error) {
 		return m, fmt.Errorf("zero rows found in %q\n", s) // need non-zero rows
 	}
 
-	// loop through rows and columns
+	// loop through rows, then items in rows
 	for _, row := range rows {
-		cols := strings.Split(strings.Trim(row, " "), " ")
-		if len(cols) == 0 {
-			return m, fmt.Errorf("zero cols found in %q\n", row) // need non-zero cols
+		items := strings.Split(strings.Trim(row, " "), " ")
+
+		if len(items) == 0 {
+			return m, fmt.Errorf("zero items found in %q\n", row)
 		}
+
+		// check that pseudo-array is rectangular
+		if len(m) > 0 && len(items) != len(m[0]) {
+			return m, fmt.Errorf("irregular row length found in %q\n", s)
+		}
+
+		// parse items into a slice of integers, and add it to the matrix
 		ints := []int{}
-		for _, cell := range cols {
-			i, err := strconv.Atoi(cell)
+		for _, item := range items {
+			i, err := strconv.Atoi(item)
 			if err != nil {
-				return m, fmt.Errorf("unparseable value found in %q\n", cell)
+				return m, fmt.Errorf("unparseable value found in %q\n", item)
 			}
 			ints = append(ints, i)
 		}
 		m = append(m, ints)
 	}
 
-	// check that array is rectangular
-	x := len(m[0])
-	for y := range m {
-		if len(m[y]) != x {
-			return m, fmt.Errorf("irregular row length found in %q\n", s)
-		}
-	}
 	return m, nil
 }
 
